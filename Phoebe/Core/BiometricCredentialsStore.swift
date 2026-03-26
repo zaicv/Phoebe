@@ -30,9 +30,15 @@ final class BiometricCredentialsStore {
         let payload = SavedCredentials(email: email, password: password)
         let data = try JSONEncoder().encode(payload)
 
+        #if os(iOS)
+        let accessibility = kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
+        #else
+        let accessibility = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        #endif
+
         let access = SecAccessControlCreateWithFlags(
             nil,
-            kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
+            accessibility,
             .biometryAny,
             nil
         )
@@ -93,6 +99,18 @@ final class BiometricCredentialsStore {
 
         let saved = try JSONDecoder().decode(SavedCredentials.self, from: data)
         return (saved.email, saved.password)
+    }
+
+    var hasSavedCredentials: Bool {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: false,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        return status == errSecSuccess
     }
 }
 

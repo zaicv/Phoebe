@@ -8,6 +8,7 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var isBiometricLoading = false
     @State private var errorMessage: String? = nil
+    @State private var infoMessage: String? = nil
 
     var body: some View {
         VStack(spacing: 24) {
@@ -39,6 +40,12 @@ struct LoginView: View {
             if let error = errorMessage {
                 Text(error)
                     .foregroundColor(.red)
+                    .font(.caption)
+            }
+
+            if let info = infoMessage {
+                Text(info)
+                    .foregroundColor(.secondary)
                     .font(.caption)
             }
 
@@ -93,9 +100,16 @@ struct LoginView: View {
     private func signIn() async {
         isLoading = true
         errorMessage = nil
+        infoMessage = nil
         do {
             try await supabaseManager.signIn(email: email, password: password)
-            try? BiometricCredentialsStore.shared.saveCredentials(email: email, password: password)
+            do {
+                try BiometricCredentialsStore.shared.saveCredentials(email: email, password: password)
+                infoMessage = "Credentials saved for \(BiometricCredentialsStore.shared.biometryLabel)."
+            } catch {
+                errorMessage = "Signed in, but couldn't save credentials for biometrics."
+                print("Biometric save error: \(error)")
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -105,6 +119,7 @@ struct LoginView: View {
     private func signInWithBiometrics() async {
         isBiometricLoading = true
         errorMessage = nil
+        infoMessage = nil
         do {
             let creds = try BiometricCredentialsStore.shared.loadCredentials(
                 reason: "Unlock saved credentials to sign in to Phoebe."
