@@ -10,6 +10,8 @@ struct Phoebe: App {
             AuthGate()
                 .environmentObject(supabaseManager)
                 .environmentObject(appState)
+                .tint(appState.accentColor)
+                .preferredColorScheme(appState.preferredColorScheme)
         }
     }
 }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TodoRow: View {
+    @EnvironmentObject var appState: AppState
     let todo: Todo
     let pillarColor: Color
     @ObservedObject var repo: TodoRepository
@@ -55,7 +56,7 @@ struct TodoRow: View {
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
-            .tint(.blue)
+            .tint(appState.accentColor)
         }
     }
 

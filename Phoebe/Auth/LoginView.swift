@@ -1,13 +1,12 @@
 import SwiftUI
-#if os(macOS)
-import AppKit
-#endif
 
 struct LoginView: View {
     @EnvironmentObject var supabaseManager: SupabaseManager
+    @EnvironmentObject var appState: AppState
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
+    @State private var isBiometricLoading = false
     @State private var errorMessage: String? = nil
 
     var body: some View {
@@ -18,19 +17,23 @@ struct LoginView: View {
 
             VStack(spacing: 12) {
                 TextField("Email", text: $email)
-                    .textContentType(.emailAddress)
+                    .textContentType(.username)
                     #if os(iOS)
                     .autocapitalization(.none)
                     #endif
                     .padding()
-                    .background(fieldBackground)
-                    .cornerRadius(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                            .fill(appState.surfaceFillStyle)
+                    )
 
                 SecureField("Password", text: $password)
                     .textContentType(.password)
                     .padding()
-                    .background(fieldBackground)
-                    .cornerRadius(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                            .fill(appState.surfaceFillStyle)
+                    )
             }
 
             if let error = errorMessage {
@@ -53,9 +56,38 @@ struct LoginView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(isLoading || email.isEmpty || password.isEmpty)
+            .clipShape(RoundedRectangle(cornerRadius: appState.buttonCornerRadius))
+
+            if BiometricCredentialsStore.shared.isBiometricsAvailable {
+                Button {
+                    Task {
+                        await signInWithBiometrics()
+                    }
+                } label: {
+                    if isBiometricLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Sign In with \(BiometricCredentialsStore.shared.biometryLabel)")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(isLoading || isBiometricLoading)
+                .clipShape(RoundedRectangle(cornerRadius: appState.buttonCornerRadius))
+            }
         }
         .padding(32)
         .frame(maxWidth: 400)
+        .background(
+            RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                .fill(appState.surfaceFillStyle)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                .stroke(appState.surfaceStrokeColor.opacity(0.35), lineWidth: 0.5)
+        )
+        .padding(20)
     }
 
     private func signIn() async {
@@ -63,17 +95,26 @@ struct LoginView: View {
         errorMessage = nil
         do {
             try await supabaseManager.signIn(email: email, password: password)
+            try? BiometricCredentialsStore.shared.saveCredentials(email: email, password: password)
         } catch {
             errorMessage = error.localizedDescription
         }
         isLoading = false
     }
 
-    private var fieldBackground: Color {
-        #if os(iOS)
-        Color(.secondarySystemBackground)
-        #else
-        Color(nsColor: .textBackgroundColor)
-        #endif
+    private func signInWithBiometrics() async {
+        isBiometricLoading = true
+        errorMessage = nil
+        do {
+            let creds = try BiometricCredentialsStore.shared.loadCredentials(
+                reason: "Unlock saved credentials to sign in to Phoebe."
+            )
+            email = creds.email
+            password = creds.password
+            try await supabaseManager.signIn(email: creds.email, password: creds.password)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isBiometricLoading = false
     }
 }

@@ -4,6 +4,7 @@ import AppKit
 #endif
 
 struct PillarCard: View {
+    @EnvironmentObject var appState: AppState
     let pillar: LifePillar
     @ObservedObject var repo: TodoRepository
     @State private var isAdding = false
@@ -55,7 +56,10 @@ struct PillarCard: View {
                 .frame(height: 4)
             }
             .padding(16)
-            .background(headerBackgroundColor)
+            .background(
+                RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                    .fill(appState.surfaceFillStyle)
+            )
 
             Divider()
 
@@ -96,12 +100,15 @@ struct PillarCard: View {
                     .buttonStyle(.plain)
                 }
             }
-            .background(cardBackgroundColor)
+            .background(
+                RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                    .fill(appState.surfaceFillStyle)
+            )
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: appState.cardCornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(borderStrokeColor, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                .stroke(appState.surfaceStrokeColor.opacity(0.35), lineWidth: 0.5)
         )
     }
 
@@ -125,27 +132,4 @@ struct PillarCard: View {
         #endif
     }
 
-    private var headerBackgroundColor: Color {
-        #if os(iOS)
-        Color(.secondarySystemBackground)
-        #else
-        Color(nsColor: .windowBackgroundColor)
-        #endif
-    }
-
-    private var cardBackgroundColor: Color {
-        #if os(iOS)
-        Color(.systemBackground)
-        #else
-        Color(nsColor: .textBackgroundColor)
-        #endif
-    }
-
-    private var borderStrokeColor: Color {
-        #if os(iOS)
-        Color(.separator)
-        #else
-        Color(nsColor: .separatorColor)
-        #endif
-    }
 }

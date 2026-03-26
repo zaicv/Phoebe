@@ -24,6 +24,7 @@ private let tiles: [AppTile] = [
 
 struct HomeGrid: View {
     @EnvironmentObject var supabaseManager: SupabaseManager
+    @EnvironmentObject var appState: AppState
     @State private var selectedDestination: AppDestination? = nil
 
     let columns = [GridItem(.adaptive(minimum: 80, maximum: 100))]
@@ -37,13 +38,17 @@ struct HomeGrid: View {
                     } label: {
                         VStack(spacing: 8) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 18)
-                                    .fill(tile.color.opacity(0.15))
+                                RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                                    .fill(appState.surfaceFillStyle)
                                     .frame(width: 65, height: 65)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                                            .stroke(tile.color.opacity(0.25), lineWidth: 0.5)
+                                    )
 
                                 Image(systemName: tile.icon)
                                     .font(.system(size: 28))
-                                    .foregroundColor(tile.color)
+                                    .foregroundColor(tile.label == "Settings" ? appState.accentColor : tile.color)
                             }
 
                             Text(tile.label)
