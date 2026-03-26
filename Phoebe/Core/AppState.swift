@@ -79,6 +79,18 @@ class AppState: ObservableObject {
         didSet { defaults.set(surfaceCornerRadius, forKey: Keys.surfaceCornerRadius) }
     }
 
+    @Published var glassIntensity: Double {
+        didSet { defaults.set(glassIntensity, forKey: Keys.glassIntensity) }
+    }
+
+    @Published var flatSurfaceDepth: Double {
+        didSet { defaults.set(flatSurfaceDepth, forKey: Keys.flatSurfaceDepth) }
+    }
+
+    @Published var borderOpacity: Double {
+        didSet { defaults.set(borderOpacity, forKey: Keys.borderOpacity) }
+    }
+
     @Published private var accentRed: Double {
         didSet { defaults.set(accentRed, forKey: Keys.accentRed) }
     }
@@ -101,6 +113,15 @@ class AppState: ObservableObject {
 
         let storedRadius = defaults.object(forKey: Keys.surfaceCornerRadius) as? Double
         surfaceCornerRadius = storedRadius ?? 16
+
+        let storedGlass = defaults.object(forKey: Keys.glassIntensity) as? Double
+        glassIntensity = storedGlass ?? 0.92
+
+        let storedDepth = defaults.object(forKey: Keys.flatSurfaceDepth) as? Double
+        flatSurfaceDepth = storedDepth ?? 0.95
+
+        let storedBorder = defaults.object(forKey: Keys.borderOpacity) as? Double
+        borderOpacity = storedBorder ?? 0.35
 
         let red = defaults.object(forKey: Keys.accentRed) as? Double
         let green = defaults.object(forKey: Keys.accentGreen) as? Double
@@ -157,6 +178,15 @@ class AppState: ObservableObject {
         }
     }
 
+    var surfaceFillOpacity: Double {
+        switch surfaceMaterial {
+        case .liquidGlass:
+            return glassIntensity
+        case .flat:
+            return flatSurfaceDepth
+        }
+    }
+
     var surfaceStrokeColor: Color {
         #if os(iOS)
         Color(.separator)
@@ -168,7 +198,7 @@ class AppState: ObservableObject {
     var fieldBackgroundColor: Color {
         switch surfaceMaterial {
         case .liquidGlass:
-            return Color.white.opacity(0.08)
+            return Color.white.opacity(0.06)
         case .flat:
             #if os(iOS)
             return Color(.secondarySystemBackground)
@@ -180,7 +210,24 @@ class AppState: ObservableObject {
 
     private var flatSurfaceColor: Color {
         #if os(iOS)
-        return Color(.secondarySystemBackground)
+        return Color(.systemBackground)
+        #else
+        return Color(nsColor: .controlBackgroundColor)
+        #endif
+    }
+
+    var backgroundTopColor: Color {
+        switch surfaceMaterial {
+        case .liquidGlass:
+            return accentColor.opacity(preferredColorScheme == .dark ? 0.22 : 0.14)
+        case .flat:
+            return accentColor.opacity(preferredColorScheme == .dark ? 0.08 : 0.05)
+        }
+    }
+
+    var backgroundBottomColor: Color {
+        #if os(iOS)
+        return Color(.systemBackground)
         #else
         return Color(nsColor: .windowBackgroundColor)
         #endif
@@ -204,6 +251,9 @@ private enum Keys {
     static let cardCornerMode = "app.surface.cardCornerMode"
     static let buttonCornerMode = "app.surface.buttonCornerMode"
     static let surfaceCornerRadius = "app.surface.cornerRadius"
+    static let glassIntensity = "app.surface.glassIntensity"
+    static let flatSurfaceDepth = "app.surface.flatSurfaceDepth"
+    static let borderOpacity = "app.surface.borderOpacity"
     static let accentRed = "app.accent.red"
     static let accentGreen = "app.accent.green"
     static let accentBlue = "app.accent.blue"

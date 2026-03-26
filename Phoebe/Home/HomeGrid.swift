@@ -27,40 +27,68 @@ struct HomeGrid: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedDestination: AppDestination? = nil
 
-    let columns = [GridItem(.adaptive(minimum: 80, maximum: 100))]
+    let columns = [GridItem(.adaptive(minimum: 120, maximum: 150), spacing: 18)]
 
     var body: some View {
         NavigationStack {
-            LazyVGrid(columns: columns, spacing: 24) {
-                ForEach(tiles) { tile in
-                    Button {
-                        selectedDestination = tile.destination
-                    } label: {
-                        VStack(spacing: 8) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: appState.cardCornerRadius)
-                                    .fill(appState.surfaceFillStyle)
-                                    .frame(width: 65, height: 65)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: appState.cardCornerRadius)
-                                            .stroke(tile.color.opacity(0.25), lineWidth: 0.5)
-                                    )
+            ZStack {
+                LinearGradient(
+                    colors: [appState.backgroundTopColor, appState.backgroundBottomColor],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
-                                Image(systemName: tile.icon)
-                                    .font(.system(size: 28))
-                                    .foregroundColor(tile.label == "Settings" ? appState.accentColor : tile.color)
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Glow")
+                            .font(.system(size: 34, weight: .light, design: .rounded))
+
+                        Text("Your workspace")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+
+                    LazyVGrid(columns: columns, spacing: 18) {
+                        ForEach(tiles) { tile in
+                            Button {
+                                selectedDestination = tile.destination
+                            } label: {
+                                VStack(spacing: 10) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
+                                            .fill(appState.surfaceFillStyle)
+                                            .opacity(appState.surfaceFillOpacity)
+                                            .frame(height: 84)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
+                                                    .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                                            )
+
+                                        Image(systemName: tile.icon)
+                                            .font(.system(size: 24, weight: .regular))
+                                            .foregroundColor(tile.label == "Settings" ? appState.accentColor : tile.color)
+                                    }
+
+                                    Text(tile.label)
+                                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                                        .foregroundColor(.primary)
+                                }
                             }
-
-                            Text(tile.label)
-                                .font(.caption)
-                                .foregroundColor(.primary)
+                            .buttonStyle(.plain)
                         }
                     }
-                    .buttonStyle(.plain)
+                    .padding(.horizontal, 24)
+
+                    Spacer(minLength: 0)
                 }
             }
-            .padding(24)
             .navigationTitle("Glow")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
             .navigationDestination(item: $selectedDestination) { destination in
                 switch destination {
                 case .rays:

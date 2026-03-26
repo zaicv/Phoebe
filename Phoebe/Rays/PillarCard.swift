@@ -21,7 +21,7 @@ struct PillarCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .fill(pillar.color.opacity(0.15))
                             .frame(width: 32, height: 32)
 
@@ -57,8 +57,9 @@ struct PillarCard: View {
             }
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
                     .fill(appState.surfaceFillStyle)
+                    .opacity(appState.surfaceFillOpacity)
             )
 
             Divider()
@@ -101,14 +102,15 @@ struct PillarCard: View {
                 }
             }
             .background(
-                RoundedRectangle(cornerRadius: appState.cardCornerRadius)
+                RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
                     .fill(appState.surfaceFillStyle)
+                    .opacity(appState.surfaceFillOpacity)
             )
         }
-        .clipShape(RoundedRectangle(cornerRadius: appState.cardCornerRadius))
+        .clipShape(RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: appState.cardCornerRadius)
-                .stroke(appState.surfaceStrokeColor.opacity(0.35), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
+                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
         )
     }
 
