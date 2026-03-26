@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A1B2C3D42F76000100FAB2D7 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D62F76000100FAB2D7 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		1BB268362F758F0C00FAB2D7 /* Phoebe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Phoebe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D42F76000100FAB2D7 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Phoebe;
 			packageProductDependencies = (
+				A1B2C3D62F76000100FAB2D7 /* Supabase */,
 			);
 			productName = Phoebe;
 			productReference = 1BB268362F758F0C00FAB2D7 /* Phoebe.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 1BB2682D2F758F0C00FAB2D7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A1B2C3D52F76000100FAB2D7 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1BB268372F758F0C00FAB2D7 /* Products */;
 			projectDirPath = "";
@@ -123,6 +132,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1B2C3D52F76000100FAB2D7 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1B2C3D62F76000100FAB2D7 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D52F76000100FAB2D7 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1BB2683F2F758F0D00FAB2D7 /* Debug */ = {
