@@ -121,7 +121,7 @@ struct LoginView: View {
         errorMessage = nil
         infoMessage = nil
         do {
-            let creds = try BiometricCredentialsStore.shared.loadCredentials(
+            let creds = try await BiometricCredentialsStore.shared.loadCredentials(
                 reason: "Unlock saved credentials to sign in to Phoebe."
             )
             email = creds.email

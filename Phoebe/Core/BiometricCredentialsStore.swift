@@ -30,23 +30,6 @@ final class BiometricCredentialsStore {
         let payload = SavedCredentials(email: email, password: password)
         let data = try JSONEncoder().encode(payload)
 
-        #if os(iOS)
-        let accessibility = kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
-        #else
-        let accessibility = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        #endif
-
-        let access = SecAccessControlCreateWithFlags(
-            nil,
-            accessibility,
-            .biometryAny,
-            nil
-        )
-
-        guard let accessControl = access else {
-            throw BiometricCredentialsError.unableToCreateAccessControl
-        }
-
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -59,7 +42,7 @@ final class BiometricCredentialsStore {
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecValueData as String: data,
-            kSecAttrAccessControl as String: accessControl
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
@@ -68,17 +51,14 @@ final class BiometricCredentialsStore {
         }
     }
 
-    func loadCredentials(reason: String) throws -> (email: String, password: String) {
-        let context = LAContext()
-        context.localizedReason = reason
+    func loadCredentials(reason: String) async throws -> (email: String, password: String) {
+        try await authenticate(reason: reason)
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
-            kSecUseAuthenticationContext as String: context,
-            kSecUseOperationPrompt as String: reason,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
 
@@ -112,6 +92,24 @@ final class BiometricCredentialsStore {
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         return status == errSecSuccess
     }
+
+    private func authenticate(reason: String) async throws {
+        let context = LAContext()
+        var error: NSError?
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            throw error ?? BiometricCredentialsError.biometricsUnavailable
+        }
+
+        try await withCheckedThrowingContinuation { continuation in
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, evalError in
+                if success {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: evalError ?? BiometricCredentialsError.authenticationFailed)
+                }
+            }
+        }
+    }
 }
 
 private struct SavedCredentials: Codable {
@@ -120,20 +118,26 @@ private struct SavedCredentials: Codable {
 }
 
 enum BiometricCredentialsError: LocalizedError {
-    case unableToCreateAccessControl
     case noSavedCredentials
     case invalidCredentialData
+    case biometricsUnavailable
+    case authenticationFailed
     case keychainError(OSStatus)
 
     var errorDescription: String? {
         switch self {
-        case .unableToCreateAccessControl:
-            return "Unable to configure secure biometric storage."
         case .noSavedCredentials:
             return "No saved credentials found. Sign in once with email and password first."
         case .invalidCredentialData:
             return "Saved credentials are unreadable."
+        case .biometricsUnavailable:
+            return "Biometric authentication is not available on this device."
+        case .authenticationFailed:
+            return "Biometric authentication failed."
         case let .keychainError(status):
+            if status == -34018 {
+                return "Keychain access failed (-34018). In Xcode, set a valid Signing Team for the Phoebe target and add the Keychain Sharing capability, then run again."
+            }
             return "Keychain error: \(status)"
         }
     }
