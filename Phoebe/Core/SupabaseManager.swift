@@ -9,8 +9,8 @@ class SupabaseManager: ObservableObject {
 
     init() {
         client = SupabaseClient(
-            supabaseURL: URL(string: "YOUR_SUPABASE_URL")!,
-            supabaseKey: "YOUR_SUPABASE_ANON_KEY"
+            supabaseURL: URL(string: "https://mhdzzfhtvvlnkitnbqqr.supabase.co")!,
+            supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oZHp6Zmh0dnZsbmtpdG5icXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIwMzM2MjYsImV4cCI6MjA2NzYwOTYyNn0.ZFPdwDLxR8QuHoCXu8-uFJh9ECJ_jOVyQ5fCzph_eMo"
         )
 
         Task {
