@@ -199,9 +199,52 @@ struct SettingsView: View {
             .disabled(appState.designLocked)
 
             settingsCard("Background") {
+                Picker("Wallpaper Style", selection: $appState.wallpaperStyle) {
+                    ForEach(WallpaperStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+
                 VStack(alignment: .leading, spacing: 8) {
                     row(title: "Accent Blend", value: String(format: "%.2f", appState.backgroundBlend))
                     Slider(value: $appState.backgroundBlend, in: 0.0...1.0, step: 0.01)
+
+                    row(title: "Wallpaper Intensity", value: String(format: "%.2f", appState.wallpaperIntensity))
+                    Slider(value: $appState.wallpaperIntensity, in: 0.0...1.0, step: 0.01)
+
+                    row(title: "Wallpaper Blur", value: String(format: "%.1f", appState.wallpaperBlur))
+                    Slider(value: $appState.wallpaperBlur, in: 0...8, step: 0.5)
+                }
+            }
+            .disabled(appState.designLocked)
+
+            settingsCard("Springboard") {
+                Toggle("Show app labels", isOn: $appState.showAppLabels)
+                .toggleStyle(.switch)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    row(title: "Icon Scale", value: String(format: "%.2f", appState.iconScale))
+                    Slider(value: $appState.iconScale, in: 0.8...1.4, step: 0.01)
+                }
+            }
+            .disabled(appState.designLocked)
+
+            settingsCard("Dock") {
+                Toggle("Show dock", isOn: $appState.showDock)
+                    .toggleStyle(.switch)
+
+                Picker("Dock Style", selection: $appState.dockStyle) {
+                    ForEach(DockStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    row(title: "Dock Scale", value: String(format: "%.2f", appState.dockScale))
+                    Slider(value: $appState.dockScale, in: 0.8...1.4, step: 0.01)
+
+                    row(title: "Dock Opacity", value: String(format: "%.2f", appState.dockOpacity))
+                    Slider(value: $appState.dockOpacity, in: 0.2...1.0, step: 0.01)
                 }
             }
             .disabled(appState.designLocked)
@@ -313,11 +356,14 @@ struct SettingsView: View {
             settingsCard("Material Lab") {
                 Toggle("Enable experimental glass rendering", isOn: $appState.enableExperimentalGlass)
                 Toggle("Show design debug badges", isOn: $appState.showDesignDebugBadges)
+                Toggle("Enable motion effects", isOn: $appState.enableMotionEffects)
             }
 
             settingsCard("Current Tokens") {
                 row(title: "Material", value: appState.surfaceMaterial.label)
                 row(title: "Material Profile", value: appState.liquidMaterialProfile.label)
+                row(title: "Wallpaper", value: appState.wallpaperStyle.label)
+                row(title: "Dock", value: appState.dockStyle.label)
                 row(title: "Density", value: appState.densityMode.label)
                 row(title: "Card Radius", value: "\(Int(appState.cardCornerRadius))")
                 row(title: "Button Radius", value: "\(Int(appState.buttonCornerRadius))")

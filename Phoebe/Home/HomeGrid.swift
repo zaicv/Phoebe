@@ -53,6 +53,10 @@ struct HomeGrid: View {
                     }
                 }
                 .ignoresSafeArea()
+                .animation(appState.enableMotionEffects ? .spring(response: 0.35, dampingFraction: 0.85) : nil, value: appState.iconScale)
+                .animation(appState.enableMotionEffects ? .spring(response: 0.35, dampingFraction: 0.85) : nil, value: appState.dockScale)
+                .animation(appState.enableMotionEffects ? .easeInOut(duration: 0.22) : nil, value: appState.showDock)
+                .animation(appState.enableMotionEffects ? .easeInOut(duration: 0.22) : nil, value: appState.showAppLabels)
             }
             #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
@@ -74,23 +78,45 @@ struct HomeGrid: View {
 
     private var wallpaper: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color(hex: "#4CB0F7"), Color(hex: "#4D4BD6")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            switch appState.wallpaperStyle {
+            case .aurora:
+                LinearGradient(
+                    colors: [Color(hex: "#4CB0F7"), Color(hex: "#4D4BD6")],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
 
-            Circle()
-                .fill(Color(hex: "#6BD6FF").opacity(0.35))
-                .frame(width: 540, height: 540)
-                .offset(x: -210, y: 230)
-                .blur(radius: 2)
+                Circle()
+                    .fill(Color(hex: "#6BD6FF").opacity(0.35 * appState.wallpaperIntensity))
+                    .frame(width: 540, height: 540)
+                    .offset(x: -210, y: 230)
+                    .blur(radius: 2 + appState.wallpaperBlur)
 
-            Circle()
-                .fill(Color(hex: "#6AA3FF").opacity(0.36))
-                .frame(width: 620, height: 620)
-                .offset(x: 230, y: -120)
-                .blur(radius: 2)
+                Circle()
+                    .fill(Color(hex: "#6AA3FF").opacity(0.36 * appState.wallpaperIntensity))
+                    .frame(width: 620, height: 620)
+                    .offset(x: 230, y: -120)
+                    .blur(radius: 2 + appState.wallpaperBlur)
+            case .gradient:
+                LinearGradient(
+                    colors: [
+                        appState.accentColor.opacity(0.65 * appState.wallpaperIntensity),
+                        Color(hex: "#151A2D")
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .blur(radius: appState.wallpaperBlur)
+            case .minimal:
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.16 + (0.14 * appState.wallpaperIntensity)),
+                        Color.black.opacity(0.3 + (0.12 * appState.wallpaperIntensity))
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
         }
     }
 
@@ -111,18 +137,30 @@ struct HomeGrid: View {
                 }
 
                 Text(tile.label)
-                    .font(.system(size: metrics.labelSize, weight: .medium, design: .rounded))
+                    .font(.system(size: metrics.labelSize * appState.spacingScale, weight: .medium, design: .rounded))
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
                     .lineLimit(1)
+                    .opacity(appState.showAppLabels ? 1 : 0)
             }
             .frame(width: metrics.tileSlotWidth)
+            .overlay(alignment: .topTrailing) {
+                if appState.showDesignDebugBadges {
+                    Text("APP")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.black.opacity(0.35))
+                        .clipShape(Capsule())
+                        .offset(x: 4, y: -4)
+                }
+            }
         }
         .buttonStyle(.plain)
     }
 
     private func dock(metrics: HomeMetrics) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 14 * appState.spacingScale) {
             ForEach(tiles) { tile in
                 Button {
                     selectedDestination = tile.destination
@@ -145,20 +183,35 @@ struct HomeGrid: View {
             dockBackground(cornerRadius: metrics.iconCornerRadius)
         )
         .padding(.bottom, metrics.dockBottomPadding)
+        .opacity(appState.showDock ? 1 : 0)
+        .allowsHitTesting(appState.showDock)
     }
 
     @ViewBuilder
     private func dockBackground(cornerRadius: CGFloat) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26, macOS 26, *), appState.enableExperimentalGlass {
+        switch appState.dockStyle {
+        case .liquid:
+            if #available(iOS 26, macOS 26, *), appState.enableExperimentalGlass {
+                shape
+                    .fill(Color.clear)
+                    .glassEffect(.regular.interactive(), in: shape)
+                    .opacity(appState.dockOpacity)
+                    .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
+            } else {
+                shape
+                    .fill(.ultraThinMaterial)
+                    .opacity(appState.dockOpacity)
+                    .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
+            }
+        case .flat:
             shape
-                .fill(Color.clear)
-                .glassEffect(.regular.interactive(), in: shape)
+                .fill(Color.black.opacity(0.18 + (0.2 * appState.dockOpacity)))
                 .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
-        } else {
+        case .accent:
             shape
-                .fill(.ultraThinMaterial)
-                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
+                .fill(appState.accentColor.opacity(0.2 + (0.35 * appState.dockOpacity)))
+                .overlay(shape.stroke(appState.accentColor.opacity(0.35), lineWidth: appState.surfaceStrokeWidth))
         }
     }
 
@@ -168,7 +221,7 @@ struct HomeGrid: View {
         let isLarge = minSide > 1050
 
         if isCompact {
-            return HomeMetrics(
+            return scaledMetrics(HomeMetrics(
                 iconSize: 56,
                 symbolSize: 24,
                 iconCornerRadius: 16,
@@ -187,11 +240,11 @@ struct HomeGrid: View {
                 dockBottomPadding: 18,
                 iconShadowRadius: 5,
                 iconShadowY: 3
-            )
+            ))
         }
 
         if isLarge {
-            return HomeMetrics(
+            return scaledMetrics(HomeMetrics(
                 iconSize: 72,
                 symbolSize: 31,
                 iconCornerRadius: 22,
@@ -210,10 +263,10 @@ struct HomeGrid: View {
                 dockBottomPadding: 30,
                 iconShadowRadius: 7,
                 iconShadowY: 4
-            )
+            ))
         }
 
-        return HomeMetrics(
+        return scaledMetrics(HomeMetrics(
             iconSize: 64,
             symbolSize: 27,
             iconCornerRadius: 20,
@@ -232,6 +285,32 @@ struct HomeGrid: View {
             dockBottomPadding: 26,
             iconShadowRadius: 6,
             iconShadowY: 4
+        ))
+    }
+
+    private func scaledMetrics(_ metrics: HomeMetrics) -> HomeMetrics {
+        let iconScale = appState.effectiveIconScale
+        let dockScale = appState.effectiveDockScale
+
+        return HomeMetrics(
+            iconSize: metrics.iconSize * iconScale,
+            symbolSize: metrics.symbolSize * iconScale,
+            iconCornerRadius: metrics.iconCornerRadius * iconScale,
+            labelSize: metrics.labelSize * CGFloat(appState.uiScale),
+            labelGap: metrics.labelGap * appState.spacingScale,
+            tileSlotWidth: metrics.tileSlotWidth * iconScale,
+            gridSpacing: metrics.gridSpacing * appState.spacingScale,
+            horizontalPadding: metrics.horizontalPadding * appState.spacingScale,
+            topSpacerRatio: metrics.topSpacerRatio,
+            bottomGap: metrics.bottomGap * appState.spacingScale,
+            dockIconSize: metrics.dockIconSize * dockScale,
+            dockSymbolSize: metrics.dockSymbolSize * dockScale,
+            dockIconCornerRadius: metrics.dockIconCornerRadius * dockScale,
+            dockHorizontalPadding: metrics.dockHorizontalPadding * dockScale,
+            dockVerticalPadding: metrics.dockVerticalPadding * dockScale,
+            dockBottomPadding: metrics.dockBottomPadding * dockScale,
+            iconShadowRadius: metrics.iconShadowRadius * iconScale,
+            iconShadowY: metrics.iconShadowY * iconScale
         )
     }
 }

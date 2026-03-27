@@ -92,6 +92,38 @@ enum DesignLanguagePreset: String, CaseIterable, Identifiable {
     }
 }
 
+enum WallpaperStyle: String, CaseIterable, Identifiable {
+    case aurora
+    case gradient
+    case minimal
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .aurora: return "Aurora"
+        case .gradient: return "Gradient"
+        case .minimal: return "Minimal"
+        }
+    }
+}
+
+enum DockStyle: String, CaseIterable, Identifiable {
+    case liquid
+    case flat
+    case accent
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .liquid: return "Liquid"
+        case .flat: return "Flat"
+        case .accent: return "Accent"
+        }
+    }
+}
+
 enum SurfaceCornerMode: String, CaseIterable, Identifiable {
     case sharp
     case rounded
@@ -167,6 +199,46 @@ class AppState: ObservableObject {
         didSet { defaults.set(selectedPreset.rawValue, forKey: Keys.selectedPreset) }
     }
 
+    @Published var wallpaperStyle: WallpaperStyle {
+        didSet { defaults.set(wallpaperStyle.rawValue, forKey: Keys.wallpaperStyle) }
+    }
+
+    @Published var wallpaperIntensity: Double {
+        didSet { defaults.set(wallpaperIntensity, forKey: Keys.wallpaperIntensity) }
+    }
+
+    @Published var wallpaperBlur: Double {
+        didSet { defaults.set(wallpaperBlur, forKey: Keys.wallpaperBlur) }
+    }
+
+    @Published var iconScale: Double {
+        didSet { defaults.set(iconScale, forKey: Keys.iconScale) }
+    }
+
+    @Published var showAppLabels: Bool {
+        didSet { defaults.set(showAppLabels, forKey: Keys.showAppLabels) }
+    }
+
+    @Published var showDock: Bool {
+        didSet { defaults.set(showDock, forKey: Keys.showDock) }
+    }
+
+    @Published var dockStyle: DockStyle {
+        didSet { defaults.set(dockStyle.rawValue, forKey: Keys.dockStyle) }
+    }
+
+    @Published var dockScale: Double {
+        didSet { defaults.set(dockScale, forKey: Keys.dockScale) }
+    }
+
+    @Published var dockOpacity: Double {
+        didSet { defaults.set(dockOpacity, forKey: Keys.dockOpacity) }
+    }
+
+    @Published var enableMotionEffects: Bool {
+        didSet { defaults.set(enableMotionEffects, forKey: Keys.enableMotionEffects) }
+    }
+
     @Published var designLocked: Bool {
         didSet { defaults.set(designLocked, forKey: Keys.designLocked) }
     }
@@ -223,6 +295,16 @@ class AppState: ObservableObject {
 
         densityMode = UIDensityMode(rawValue: defaults.string(forKey: Keys.densityMode) ?? "") ?? .comfortable
         selectedPreset = DesignLanguagePreset(rawValue: defaults.string(forKey: Keys.selectedPreset) ?? "") ?? .glassy
+        wallpaperStyle = WallpaperStyle(rawValue: defaults.string(forKey: Keys.wallpaperStyle) ?? "") ?? .aurora
+        wallpaperIntensity = defaults.object(forKey: Keys.wallpaperIntensity) as? Double ?? 0.8
+        wallpaperBlur = defaults.object(forKey: Keys.wallpaperBlur) as? Double ?? 0.0
+        iconScale = defaults.object(forKey: Keys.iconScale) as? Double ?? 1.0
+        showAppLabels = defaults.object(forKey: Keys.showAppLabels) as? Bool ?? true
+        showDock = defaults.object(forKey: Keys.showDock) as? Bool ?? true
+        dockStyle = DockStyle(rawValue: defaults.string(forKey: Keys.dockStyle) ?? "") ?? .liquid
+        dockScale = defaults.object(forKey: Keys.dockScale) as? Double ?? 1.0
+        dockOpacity = defaults.object(forKey: Keys.dockOpacity) as? Double ?? 0.92
+        enableMotionEffects = defaults.object(forKey: Keys.enableMotionEffects) as? Bool ?? true
         designLocked = defaults.bool(forKey: Keys.designLocked)
         showDesignDebugBadges = defaults.bool(forKey: Keys.showDesignDebugBadges)
         enableExperimentalGlass = defaults.object(forKey: Keys.enableExperimentalGlass) as? Bool ?? true
@@ -366,6 +448,14 @@ class AppState: ObservableObject {
         CGFloat(2 + (shadowStrength * 10))
     }
 
+    var effectiveIconScale: CGFloat {
+        CGFloat(iconScale * uiScale)
+    }
+
+    var effectiveDockScale: CGFloat {
+        CGFloat(dockScale * uiScale)
+    }
+
     func applySelectedPreset() {
         guard !designLocked else { return }
 
@@ -382,6 +472,16 @@ class AppState: ObservableObject {
             surfaceCornerRadius = 16
             cardCornerMode = .rounded
             buttonCornerMode = .rounded
+            wallpaperStyle = .aurora
+            wallpaperIntensity = 0.82
+            wallpaperBlur = 0.0
+            iconScale = 1.0
+            showAppLabels = true
+            showDock = true
+            dockStyle = .liquid
+            dockScale = 1.0
+            dockOpacity = 0.92
+            enableMotionEffects = true
         case .notion:
             surfaceMaterial = .flat
             liquidMaterialProfile = .thin
@@ -394,6 +494,16 @@ class AppState: ObservableObject {
             surfaceCornerRadius = 8
             cardCornerMode = .rounded
             buttonCornerMode = .rounded
+            wallpaperStyle = .minimal
+            wallpaperIntensity = 0.35
+            wallpaperBlur = 2
+            iconScale = 0.96
+            showAppLabels = true
+            showDock = true
+            dockStyle = .flat
+            dockScale = 0.96
+            dockOpacity = 0.96
+            enableMotionEffects = false
         case .obsidian:
             surfaceMaterial = .flat
             liquidMaterialProfile = .thick
@@ -406,6 +516,16 @@ class AppState: ObservableObject {
             surfaceCornerRadius = 10
             cardCornerMode = .rounded
             buttonCornerMode = .rounded
+            wallpaperStyle = .gradient
+            wallpaperIntensity = 0.55
+            wallpaperBlur = 1
+            iconScale = 1.0
+            showAppLabels = true
+            showDock = true
+            dockStyle = .flat
+            dockScale = 1.0
+            dockOpacity = 0.9
+            enableMotionEffects = false
         case .chat:
             surfaceMaterial = .liquidGlass
             liquidMaterialProfile = .thin
@@ -418,6 +538,16 @@ class AppState: ObservableObject {
             surfaceCornerRadius = 14
             cardCornerMode = .rounded
             buttonCornerMode = .pill
+            wallpaperStyle = .gradient
+            wallpaperIntensity = 0.6
+            wallpaperBlur = 0
+            iconScale = 1.0
+            showAppLabels = false
+            showDock = true
+            dockStyle = .liquid
+            dockScale = 1.04
+            dockOpacity = 0.88
+            enableMotionEffects = true
         }
     }
 
@@ -436,6 +566,16 @@ class AppState: ObservableObject {
         uiScale = 1.0
         backgroundBlend = 0.5
         densityMode = .comfortable
+        wallpaperStyle = .aurora
+        wallpaperIntensity = 0.8
+        wallpaperBlur = 0
+        iconScale = 1.0
+        showAppLabels = true
+        showDock = true
+        dockStyle = .liquid
+        dockScale = 1.0
+        dockOpacity = 0.92
+        enableMotionEffects = true
         setAccentColor(Color(red: 0.0, green: 0.478, blue: 1.0))
     }
 
@@ -466,6 +606,16 @@ private enum Keys {
     static let backgroundBlend = "app.background.blend"
     static let densityMode = "app.ui.densityMode"
     static let selectedPreset = "app.design.selectedPreset"
+    static let wallpaperStyle = "app.wallpaper.style"
+    static let wallpaperIntensity = "app.wallpaper.intensity"
+    static let wallpaperBlur = "app.wallpaper.blur"
+    static let iconScale = "app.icon.scale"
+    static let showAppLabels = "app.icon.showLabels"
+    static let showDock = "app.dock.show"
+    static let dockStyle = "app.dock.style"
+    static let dockScale = "app.dock.scale"
+    static let dockOpacity = "app.dock.opacity"
+    static let enableMotionEffects = "app.motion.effects"
     static let designLocked = "app.design.locked"
     static let showDesignDebugBadges = "app.design.debugBadges"
     static let enableExperimentalGlass = "app.design.experimentalGlass"
