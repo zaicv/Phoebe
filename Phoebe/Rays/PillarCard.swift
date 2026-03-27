@@ -9,6 +9,8 @@ struct PillarCard: View {
     @ObservedObject var repo: TodoRepository
     @State private var isAdding = false
     @State private var newTitle = ""
+    private let todoListHeight: CGFloat = 210
+    private let cardHeight: CGFloat = 360
 
     var todos: [Todo] { repo.todos(for: pillar) }
     var completed: Int { repo.completedCount(for: pillar) }
@@ -66,12 +68,19 @@ struct PillarCard: View {
 
             // Todos list
             VStack(spacing: 0) {
-                ForEach(todos) { todo in
-                    TodoRow(todo: todo, pillarColor: pillar.color, repo: repo)
-                    Divider().padding(.leading, 40)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(todos) { todo in
+                            TodoRow(todo: todo, pillarColor: pillar.color, repo: repo)
+                            Divider().padding(.leading, 40)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .top)
                 }
+                .frame(height: todoListHeight)
 
                 // Add todo
+                Divider()
                 if isAdding {
                     HStack {
                         TextField("New todo...", text: $newTitle)
@@ -112,6 +121,7 @@ struct PillarCard: View {
             RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
                 .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
         )
+        .frame(height: cardHeight, alignment: .top)
     }
 
     private func submitNew() {

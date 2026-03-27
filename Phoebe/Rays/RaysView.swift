@@ -3,7 +3,18 @@ import SwiftUI
 struct RaysView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var repo = TodoRepository()
-    let columns = [GridItem(.adaptive(minimum: 280), spacing: 16)]
+    private let cardWidth: CGFloat = 320
+    private let gridSpacing: CGFloat = 16
+    private var columns: [GridItem] {
+        [
+            GridItem(.fixed(cardWidth), spacing: gridSpacing),
+            GridItem(.fixed(cardWidth), spacing: gridSpacing),
+            GridItem(.fixed(cardWidth), spacing: gridSpacing)
+        ]
+    }
+    private var gridMinWidth: CGFloat {
+        (cardWidth * 3) + (gridSpacing * 2)
+    }
 
     var body: some View {
         ZStack {
@@ -36,12 +47,17 @@ struct RaysView: View {
                     ProgressView()
                         .padding(.top, 48)
                 } else {
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(pillars) { pillar in
-                            PillarCard(pillar: pillar, repo: repo)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyVGrid(columns: columns, spacing: gridSpacing) {
+                            ForEach(pillars) { pillar in
+                                PillarCard(pillar: pillar, repo: repo)
+                                    .frame(width: cardWidth)
+                            }
                         }
+                        .frame(minWidth: gridMinWidth, alignment: .leading)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
                     }
-                    .padding(24)
                 }
 
                 if let loadError = repo.loadError {
