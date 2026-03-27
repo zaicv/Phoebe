@@ -17,10 +17,10 @@ struct RaysView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Rays")
-                        .font(.system(size: 34, weight: .light, design: .rounded))
+                        .font(.system(size: appState.titleFontSize, weight: .light, design: .rounded))
 
                     Text("Life pillars · Todos")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.system(size: appState.bodyFontSize, weight: .medium, design: .rounded))
                         .foregroundColor(.secondary)
 
                     if repo.isRefreshing && !repo.todos.isEmpty {

@@ -22,10 +22,10 @@ struct LoginView: View {
             VStack(spacing: 24) {
                 VStack(spacing: 6) {
                     Text("Glow")
-                        .font(.system(size: 40, weight: .light, design: .rounded))
+                        .font(.system(size: appState.titleFontSize + 6, weight: .light, design: .rounded))
 
                     Text("Sign in to continue")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(.system(size: appState.bodyFontSize, weight: .medium, design: .rounded))
                         .foregroundColor(.secondary)
                 }
 
@@ -43,7 +43,7 @@ struct LoginView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
-                                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
                         )
 
                     SecureField("Password", text: $password)
@@ -56,7 +56,7 @@ struct LoginView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
-                                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
                         )
                 }
 
@@ -116,7 +116,7 @@ struct LoginView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
-                    .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                    .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
             )
             .padding(20)
         }

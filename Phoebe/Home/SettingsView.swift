@@ -3,6 +3,7 @@ import Auth
 
 private enum SettingsSection: String, CaseIterable, Identifiable {
     case appearance = "Appearance"
+    case development = "Development"
     case profile = "Profile"
     case account = "Account"
     case app = "App"
@@ -12,6 +13,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .appearance: return "paintbrush.pointed"
+        case .development: return "hammer"
         case .profile: return "person.crop.circle"
         case .account: return "person.badge.key"
         case .app: return "gearshape"
@@ -43,7 +45,7 @@ struct SettingsView: View {
 
                     List(SettingsSection.allCases, selection: $selectedSection) { section in
                         Label(section.rawValue, systemImage: section.icon)
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .font(.system(size: appState.bodyFontSize, weight: .medium, design: .rounded))
                             .tag(section)
                     }
                     .scrollContentBackground(.hidden)
@@ -69,6 +71,8 @@ struct SettingsView: View {
                         switch selectedSection {
                         case .appearance:
                             appearanceSection
+                        case .development:
+                            developmentSection
                         case .profile:
                             profileSection
                         case .account:
@@ -100,10 +104,10 @@ struct SettingsView: View {
                 )
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(displayName)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    Text(displayName)
+                    .font(.system(size: appState.bodyFontSize, weight: .semibold, design: .rounded))
                 Text("Phoebe Account")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.system(size: max(10, appState.bodyFontSize - 2), weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
             }
 
@@ -123,6 +127,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
             }
+            .disabled(appState.designLocked)
 
             settingsCard("Surface Style") {
                 Picker("Material", selection: $appState.surfaceMaterial) {
@@ -131,6 +136,14 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                if appState.surfaceMaterial == .liquidGlass {
+                    Picker("Glass Profile", selection: $appState.liquidMaterialProfile) {
+                        ForEach(LiquidMaterialProfile.allCases) { material in
+                            Text(material.label).tag(material)
+                        }
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 8) {
                     if appState.surfaceMaterial == .liquidGlass {
@@ -143,8 +156,12 @@ struct SettingsView: View {
 
                     row(title: "Border Strength", value: String(format: "%.2f", appState.borderOpacity))
                     Slider(value: $appState.borderOpacity, in: 0.10...0.80, step: 0.01)
+
+                    row(title: "Shadow Strength", value: String(format: "%.2f", appState.shadowStrength))
+                    Slider(value: $appState.shadowStrength, in: 0.0...1.0, step: 0.01)
                 }
             }
+            .disabled(appState.designLocked)
 
             settingsCard("Geometry") {
                 Picker("Card Edges", selection: $appState.cardCornerMode) {
@@ -164,6 +181,30 @@ struct SettingsView: View {
                     Slider(value: $appState.surfaceCornerRadius, in: 0...40, step: 1)
                 }
             }
+            .disabled(appState.designLocked)
+
+            settingsCard("Typography & Density") {
+                Picker("Density", selection: $appState.densityMode) {
+                    ForEach(UIDensityMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    row(title: "UI Scale", value: String(format: "%.2f", appState.uiScale))
+                    Slider(value: $appState.uiScale, in: 0.85...1.3, step: 0.01)
+                }
+            }
+            .disabled(appState.designLocked)
+
+            settingsCard("Background") {
+                VStack(alignment: .leading, spacing: 8) {
+                    row(title: "Accent Blend", value: String(format: "%.2f", appState.backgroundBlend))
+                    Slider(value: $appState.backgroundBlend, in: 0.0...1.0, step: 0.01)
+                }
+            }
+            .disabled(appState.designLocked)
 
             settingsCard("Accent") {
                 ColorPicker("Accent Color", selection: accentBinding, supportsOpacity: false)
@@ -176,12 +217,13 @@ struct SettingsView: View {
                             Circle()
                                 .fill(color)
                                 .frame(width: 22, height: 22)
-                                .overlay(Circle().stroke(Color.primary.opacity(0.2), lineWidth: 0.6))
+                                .overlay(Circle().stroke(Color.primary.opacity(0.2), lineWidth: appState.surfaceStrokeWidth))
                         }
                         .buttonStyle(.plain)
                     }
                 }
             }
+            .disabled(appState.designLocked)
 
             settingsCard("Preview") {
                 VStack(alignment: .leading, spacing: 12) {
@@ -189,12 +231,13 @@ struct SettingsView: View {
                         .fill(appState.surfaceFillStyle)
                         .opacity(appState.surfaceFillOpacity)
                         .frame(height: 92)
+                        .shadow(color: .black.opacity(0.12 * appState.shadowStrength), radius: appState.surfaceShadowRadius, x: 0, y: 2)
                         .overlay(
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Surface")
-                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .font(.system(size: appState.bodyFontSize + 1, weight: .semibold, design: .rounded))
                                 Text("Minimal, layered, and adaptive.")
-                                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                                    .font(.system(size: max(11, appState.bodyFontSize - 1), weight: .medium, design: .rounded))
                                     .foregroundColor(.secondary)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -202,12 +245,12 @@ struct SettingsView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
-                                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
                         )
 
                     HStack(spacing: 10) {
                         Text("Primary")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .font(.system(size: max(11, appState.bodyFontSize - 1), weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 14)
@@ -215,7 +258,7 @@ struct SettingsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: appState.buttonCornerRadius, style: .continuous))
 
                         Text("Secondary")
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .font(.system(size: max(11, appState.bodyFontSize - 1), weight: .medium, design: .rounded))
                             .padding(.vertical, 8)
                             .padding(.horizontal, 14)
                             .background(
@@ -225,10 +268,60 @@ struct SettingsView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: appState.buttonCornerRadius, style: .continuous)
-                                    .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                                    .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
                             )
                     }
                 }
+            }
+
+            if appState.designLocked {
+                settingsCard("Design Lock") {
+                    Text("Design is locked. Open Development to unlock editing.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+
+    private var developmentSection: some View {
+        VStack(spacing: 16) {
+            settingsCard("Design Language") {
+                Toggle("Lock appearance controls", isOn: $appState.designLocked)
+
+                Picker("Preset", selection: $appState.selectedPreset) {
+                    ForEach(DesignLanguagePreset.allCases) { preset in
+                        Text(preset.label).tag(preset)
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Button("Apply Preset") {
+                        appState.applySelectedPreset()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(appState.designLocked)
+
+                    Button("Reset Defaults") {
+                        appState.resetAppearanceDefaults()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(appState.designLocked)
+                }
+            }
+
+            settingsCard("Material Lab") {
+                Toggle("Enable experimental glass rendering", isOn: $appState.enableExperimentalGlass)
+                Toggle("Show design debug badges", isOn: $appState.showDesignDebugBadges)
+            }
+
+            settingsCard("Current Tokens") {
+                row(title: "Material", value: appState.surfaceMaterial.label)
+                row(title: "Material Profile", value: appState.liquidMaterialProfile.label)
+                row(title: "Density", value: appState.densityMode.label)
+                row(title: "Card Radius", value: "\(Int(appState.cardCornerRadius))")
+                row(title: "Button Radius", value: "\(Int(appState.buttonCornerRadius))")
+                row(title: "Scale", value: String(format: "%.2f", appState.uiScale))
             }
         }
     }
@@ -257,7 +350,7 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity)
                 } else {
                     Text("Sign Out")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.system(size: appState.bodyFontSize, weight: .semibold, design: .rounded))
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -285,11 +378,11 @@ struct SettingsView: View {
     private func settingsCard<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.system(size: appState.bodyFontSize + 1, weight: .semibold, design: .rounded))
 
             content()
         }
-        .padding(16)
+        .padding(16 * appState.spacingScale)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(surfacePanel(cornerRadius: appState.cardCornerRadius))
     }
@@ -299,10 +392,10 @@ struct SettingsView: View {
         HStack {
             Text(title)
                 .foregroundColor(.secondary)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(size: appState.bodyFontSize, weight: .medium, design: .rounded))
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.system(size: appState.bodyFontSize, weight: .medium, design: .rounded))
                 .multilineTextAlignment(.trailing)
         }
     }
@@ -311,22 +404,22 @@ struct SettingsView: View {
     private func surfacePanel(cornerRadius: CGFloat) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         if appState.surfaceMaterial == .liquidGlass {
-            if #available(iOS 26, macOS 26, *) {
+            if #available(iOS 26, macOS 26, *), appState.enableExperimentalGlass {
                 shape
                     .fill(Color.clear)
                     .glassEffect(.regular.interactive(), in: shape)
-                    .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6))
+                    .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
             } else {
                 shape
                     .fill(appState.surfaceFillStyle)
                     .opacity(appState.surfaceFillOpacity)
-                    .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6))
+                    .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
             }
         } else {
             shape
                 .fill(appState.surfaceFillStyle)
                 .opacity(appState.surfaceFillOpacity)
-                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6))
+                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
         }
     }
 

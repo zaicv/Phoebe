@@ -150,15 +150,15 @@ struct HomeGrid: View {
     @ViewBuilder
     private func dockBackground(cornerRadius: CGFloat) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26, macOS 26, *) {
+        if #available(iOS 26, macOS 26, *), appState.enableExperimentalGlass {
             shape
                 .fill(Color.clear)
                 .glassEffect(.regular.interactive(), in: shape)
-                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6))
+                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
         } else {
             shape
                 .fill(.ultraThinMaterial)
-                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6))
+                .overlay(shape.stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth))
         }
     }
 

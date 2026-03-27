@@ -110,7 +110,7 @@ struct PillarCard: View {
         .clipShape(RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: appState.cardCornerRadius, style: .continuous)
-                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: 0.6)
+                .stroke(appState.surfaceStrokeColor.opacity(appState.borderOpacity), lineWidth: appState.surfaceStrokeWidth)
         )
     }
 
