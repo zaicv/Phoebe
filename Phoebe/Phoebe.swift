@@ -13,5 +13,8 @@ struct Phoebe: App {
                 .tint(appState.accentColor)
                 .preferredColorScheme(appState.preferredColorScheme)
         }
+        #if os(macOS)
+        .windowStyle(.hiddenTitleBar)
+        #endif
     }
 }

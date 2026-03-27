@@ -6,30 +6,64 @@ import Supabase
 class TodoRepository: ObservableObject {
     @Published var todos: [Todo] = []
     @Published var isLoading = false
+    @Published var isRefreshing = false
+    @Published var loadError: String?
 
     private let client = SupabaseManager.shared.client
     private let goalGroups = pillars.map { $0.goalGroup }
+    private var inFlightFetch: Task<[Todo], Error>?
+    private var lastFetchAt: Date?
+    private let minimumRefreshInterval: TimeInterval = 20
+    private let defaults = UserDefaults.standard
 
-    func fetchAll() async {
-        isLoading = true
+    init() {
+        restoreCachedTodos()
+    }
+
+    func loadIfNeeded() async {
+        await fetchAll(force: false)
+    }
+
+    func fetchAll(force: Bool = true) async {
+        guard let userId = SupabaseManager.shared.session?.user.id else {
+            loadError = "No active session."
+            return
+        }
+
+        if !force,
+           let lastFetchAt,
+           Date().timeIntervalSince(lastFetchAt) < minimumRefreshInterval {
+            return
+        }
+
+        if todos.isEmpty {
+            isLoading = true
+        }
+        isRefreshing = true
+        loadError = nil
+
         do {
-            guard let userId = SupabaseManager.shared.session?.user.id else { return }
-
-            let result: [Todo] = try await client
-                .from("todos")
-                .select()
-                .eq("user_id", value: userId.uuidString)
-                .in("goal_group", values: goalGroups)
-                .order("priority", ascending: true)
-                .order("created_at", ascending: false)
-                .execute()
-                .value
+            let result: [Todo]
+            if let inFlightFetch {
+                result = try await inFlightFetch.value
+            } else {
+                let task = Task<[Todo], Error> {
+                    try await self.fetchWithRetry(userId: userId)
+                }
+                inFlightFetch = task
+                defer { inFlightFetch = nil }
+                result = try await task.value
+            }
 
             todos = result
+            cacheTodos(result, for: userId)
+            lastFetchAt = Date()
         } catch {
+            loadError = "Couldn't refresh todos. Showing latest cached data."
             print("fetchAll error: \(error)")
         }
         isLoading = false
+        isRefreshing = false
     }
 
     func toggle(_ todo: Todo) async {
@@ -67,7 +101,7 @@ class TodoRepository: ObservableObject {
                 ])
                 .execute()
 
-            await fetchAll()
+            await fetchAll(force: true)
         } catch {
             print("create error: \(error)")
         }
@@ -81,7 +115,7 @@ class TodoRepository: ObservableObject {
                 .eq("id", value: todo.id)
                 .execute()
 
-            await fetchAll()
+            await fetchAll(force: true)
         } catch {
             print("updateTitle error: \(error)")
         }
@@ -117,7 +151,7 @@ class TodoRepository: ObservableObject {
                 .execute()
         } catch {
             print("move error: \(error)")
-            await fetchAll()
+            await fetchAll(force: true)
         }
     }
 
@@ -127,5 +161,54 @@ class TodoRepository: ObservableObject {
 
     func completedCount(for pillar: LifePillar) -> Int {
         todos(for: pillar).filter { $0.isCompleted }.count
+    }
+
+    private func fetchWithRetry(userId: UUID) async throws -> [Todo] {
+        var attempt = 0
+        var delayNanos: UInt64 = 300_000_000
+        var lastError: Error?
+
+        while attempt < 3 {
+            do {
+                return try await client
+                    .from("todos")
+                    .select("id,title,status,priority,goal_group,user_id,created_at")
+                    .eq("user_id", value: userId.uuidString)
+                    .in("goal_group", values: goalGroups)
+                    .order("priority", ascending: true)
+                    .order("created_at", ascending: false)
+                    .execute()
+                    .value
+            } catch {
+                lastError = error
+                attempt += 1
+                if attempt < 3 {
+                    try await Task.sleep(nanoseconds: delayNanos)
+                    delayNanos *= 2
+                }
+            }
+        }
+
+        throw lastError ?? URLError(.badServerResponse)
+    }
+
+    private func cacheTodos(_ todos: [Todo], for userId: UUID) {
+        guard let data = try? JSONEncoder().encode(todos) else { return }
+        defaults.set(data, forKey: cacheKey(for: userId))
+        defaults.set(userId.uuidString, forKey: "todos.cache.lastUser")
+    }
+
+    private func restoreCachedTodos() {
+        guard let lastUser = defaults.string(forKey: "todos.cache.lastUser"),
+              let userId = UUID(uuidString: lastUser),
+              let data = defaults.data(forKey: cacheKey(for: userId)),
+              let cached = try? JSONDecoder().decode([Todo].self, from: data) else {
+            return
+        }
+        todos = cached
+    }
+
+    private func cacheKey(for userId: UUID) -> String {
+        "todos.cache.\(userId.uuidString)"
     }
 }

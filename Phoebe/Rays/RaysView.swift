@@ -22,12 +22,17 @@ struct RaysView: View {
                     Text("Life pillars · Todos")
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundColor(.secondary)
+
+                    if repo.isRefreshing && !repo.todos.isEmpty {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
 
-                if repo.isLoading {
+                if repo.isLoading && repo.todos.isEmpty {
                     ProgressView()
                         .padding(.top, 48)
                 } else {
@@ -38,10 +43,21 @@ struct RaysView: View {
                     }
                     .padding(24)
                 }
+
+                if let loadError = repo.loadError {
+                    Text(loadError)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 12)
+                }
             }
         }
         .task {
-            await repo.fetchAll()
+            await repo.loadIfNeeded()
+        }
+        .refreshable {
+            await repo.fetchAll(force: true)
         }
         .navigationTitle("Rays")
         #if os(iOS)
