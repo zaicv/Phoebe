@@ -28,6 +28,7 @@ struct SettingsView: View {
     @State private var selectedSection: SettingsSection? = .appearance
     @State private var isSigningOut = false
     @State private var errorMessage: String?
+    @State private var themePackName: String = ""
 
     var body: some View {
         NavigationSplitView {
@@ -368,6 +369,48 @@ struct SettingsView: View {
                 row(title: "Card Radius", value: "\(Int(appState.cardCornerRadius))")
                 row(title: "Button Radius", value: "\(Int(appState.buttonCornerRadius))")
                 row(title: "Scale", value: String(format: "%.2f", appState.uiScale))
+            }
+
+            settingsCard("Theme Packs") {
+                HStack(spacing: 10) {
+                    TextField("Theme pack name", text: $themePackName)
+                    Button("Save Current") {
+                        appState.saveCurrentAsThemePack(name: themePackName)
+                        themePackName = ""
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(themePackName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+
+                if appState.themePacks.isEmpty {
+                    Text("No theme packs yet.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(appState.themePacks) { pack in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(pack.name)
+                                    .font(.system(size: appState.bodyFontSize, weight: .semibold, design: .rounded))
+                                Text(pack.createdAt.formatted(date: .abbreviated, time: .shortened))
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button("Load") {
+                                appState.applyThemePack(pack)
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button(role: .destructive) {
+                                appState.deleteThemePack(pack)
+                            } label: {
+                                Text("Delete")
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
             }
         }
     }

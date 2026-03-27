@@ -10,7 +10,7 @@ import AppKit
 private typealias PlatformColor = NSColor
 #endif
 
-enum AppThemeMode: String, CaseIterable, Identifiable {
+enum AppThemeMode: String, CaseIterable, Identifiable, Codable {
     case system
     case light
     case dark
@@ -26,7 +26,7 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum SurfaceMaterialMode: String, CaseIterable, Identifiable {
+enum SurfaceMaterialMode: String, CaseIterable, Identifiable, Codable {
     case liquidGlass
     case flat
 
@@ -40,7 +40,7 @@ enum SurfaceMaterialMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum LiquidMaterialProfile: String, CaseIterable, Identifiable {
+enum LiquidMaterialProfile: String, CaseIterable, Identifiable, Codable {
     case ultraThin
     case thin
     case regular
@@ -58,7 +58,7 @@ enum LiquidMaterialProfile: String, CaseIterable, Identifiable {
     }
 }
 
-enum UIDensityMode: String, CaseIterable, Identifiable {
+enum UIDensityMode: String, CaseIterable, Identifiable, Codable {
     case compact
     case comfortable
     case spacious
@@ -74,7 +74,7 @@ enum UIDensityMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum DesignLanguagePreset: String, CaseIterable, Identifiable {
+enum DesignLanguagePreset: String, CaseIterable, Identifiable, Codable {
     case glassy
     case notion
     case obsidian
@@ -92,7 +92,7 @@ enum DesignLanguagePreset: String, CaseIterable, Identifiable {
     }
 }
 
-enum WallpaperStyle: String, CaseIterable, Identifiable {
+enum WallpaperStyle: String, CaseIterable, Identifiable, Codable {
     case aurora
     case gradient
     case minimal
@@ -108,7 +108,7 @@ enum WallpaperStyle: String, CaseIterable, Identifiable {
     }
 }
 
-enum DockStyle: String, CaseIterable, Identifiable {
+enum DockStyle: String, CaseIterable, Identifiable, Codable {
     case liquid
     case flat
     case accent
@@ -124,7 +124,7 @@ enum DockStyle: String, CaseIterable, Identifiable {
     }
 }
 
-enum SurfaceCornerMode: String, CaseIterable, Identifiable {
+enum SurfaceCornerMode: String, CaseIterable, Identifiable, Codable {
     case sharp
     case rounded
     case pill
@@ -141,7 +141,46 @@ enum SurfaceCornerMode: String, CaseIterable, Identifiable {
 }
 
 class AppState: ObservableObject {
+    struct ThemePack: Identifiable, Codable, Equatable {
+        let id: UUID
+        var name: String
+        let snapshot: AppearanceSnapshot
+        let createdAt: Date
+    }
+
+    struct AppearanceSnapshot: Codable, Equatable {
+        var themeMode: AppThemeMode
+        var surfaceMaterial: SurfaceMaterialMode
+        var liquidMaterialProfile: LiquidMaterialProfile
+        var cardCornerMode: SurfaceCornerMode
+        var buttonCornerMode: SurfaceCornerMode
+        var surfaceCornerRadius: Double
+        var glassIntensity: Double
+        var flatSurfaceDepth: Double
+        var borderOpacity: Double
+        var shadowStrength: Double
+        var uiScale: Double
+        var backgroundBlend: Double
+        var densityMode: UIDensityMode
+        var selectedPreset: DesignLanguagePreset
+        var wallpaperStyle: WallpaperStyle
+        var wallpaperIntensity: Double
+        var wallpaperBlur: Double
+        var iconScale: Double
+        var showAppLabels: Bool
+        var showDock: Bool
+        var dockStyle: DockStyle
+        var dockScale: Double
+        var dockOpacity: Double
+        var enableMotionEffects: Bool
+        var enableExperimentalGlass: Bool
+        var accentRed: Double
+        var accentGreen: Double
+        var accentBlue: Double
+    }
+
     @Published var isLoading: Bool = false
+    @Published private(set) var themePacks: [ThemePack] = []
 
     @Published var themeMode: AppThemeMode {
         didSet { defaults.set(themeMode.rawValue, forKey: Keys.themeMode) }
@@ -315,6 +354,8 @@ class AppState: ObservableObject {
         accentRed = red ?? 0.0
         accentGreen = green ?? 0.478
         accentBlue = blue ?? 1.0
+
+        themePacks = loadThemePacksFromStorage()
     }
 
     var preferredColorScheme: ColorScheme? {
@@ -579,6 +620,106 @@ class AppState: ObservableObject {
         setAccentColor(Color(red: 0.0, green: 0.478, blue: 1.0))
     }
 
+    func saveCurrentAsThemePack(name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let pack = ThemePack(
+            id: UUID(),
+            name: trimmed,
+            snapshot: currentSnapshot(),
+            createdAt: Date()
+        )
+        themePacks.insert(pack, at: 0)
+        persistThemePacks()
+    }
+
+    func applyThemePack(_ pack: ThemePack) {
+        applySnapshot(pack.snapshot)
+    }
+
+    func deleteThemePack(_ pack: ThemePack) {
+        themePacks.removeAll { $0.id == pack.id }
+        persistThemePacks()
+    }
+
+    private func currentSnapshot() -> AppearanceSnapshot {
+        AppearanceSnapshot(
+            themeMode: themeMode,
+            surfaceMaterial: surfaceMaterial,
+            liquidMaterialProfile: liquidMaterialProfile,
+            cardCornerMode: cardCornerMode,
+            buttonCornerMode: buttonCornerMode,
+            surfaceCornerRadius: surfaceCornerRadius,
+            glassIntensity: glassIntensity,
+            flatSurfaceDepth: flatSurfaceDepth,
+            borderOpacity: borderOpacity,
+            shadowStrength: shadowStrength,
+            uiScale: uiScale,
+            backgroundBlend: backgroundBlend,
+            densityMode: densityMode,
+            selectedPreset: selectedPreset,
+            wallpaperStyle: wallpaperStyle,
+            wallpaperIntensity: wallpaperIntensity,
+            wallpaperBlur: wallpaperBlur,
+            iconScale: iconScale,
+            showAppLabels: showAppLabels,
+            showDock: showDock,
+            dockStyle: dockStyle,
+            dockScale: dockScale,
+            dockOpacity: dockOpacity,
+            enableMotionEffects: enableMotionEffects,
+            enableExperimentalGlass: enableExperimentalGlass,
+            accentRed: accentRed,
+            accentGreen: accentGreen,
+            accentBlue: accentBlue
+        )
+    }
+
+    private func applySnapshot(_ snapshot: AppearanceSnapshot) {
+        themeMode = snapshot.themeMode
+        surfaceMaterial = snapshot.surfaceMaterial
+        liquidMaterialProfile = snapshot.liquidMaterialProfile
+        cardCornerMode = snapshot.cardCornerMode
+        buttonCornerMode = snapshot.buttonCornerMode
+        surfaceCornerRadius = snapshot.surfaceCornerRadius
+        glassIntensity = snapshot.glassIntensity
+        flatSurfaceDepth = snapshot.flatSurfaceDepth
+        borderOpacity = snapshot.borderOpacity
+        shadowStrength = snapshot.shadowStrength
+        uiScale = snapshot.uiScale
+        backgroundBlend = snapshot.backgroundBlend
+        densityMode = snapshot.densityMode
+        selectedPreset = snapshot.selectedPreset
+        wallpaperStyle = snapshot.wallpaperStyle
+        wallpaperIntensity = snapshot.wallpaperIntensity
+        wallpaperBlur = snapshot.wallpaperBlur
+        iconScale = snapshot.iconScale
+        showAppLabels = snapshot.showAppLabels
+        showDock = snapshot.showDock
+        dockStyle = snapshot.dockStyle
+        dockScale = snapshot.dockScale
+        dockOpacity = snapshot.dockOpacity
+        enableMotionEffects = snapshot.enableMotionEffects
+        enableExperimentalGlass = snapshot.enableExperimentalGlass
+        accentRed = snapshot.accentRed
+        accentGreen = snapshot.accentGreen
+        accentBlue = snapshot.accentBlue
+    }
+
+    private func loadThemePacksFromStorage() -> [ThemePack] {
+        guard let data = defaults.data(forKey: Keys.themePacks),
+              let packs = try? JSONDecoder().decode([ThemePack].self, from: data) else {
+            return []
+        }
+        return packs
+    }
+
+    private func persistThemePacks() {
+        guard let data = try? JSONEncoder().encode(themePacks) else { return }
+        defaults.set(data, forKey: Keys.themePacks)
+    }
+
     private func resolveCornerRadius(for mode: SurfaceCornerMode) -> CGFloat {
         switch mode {
         case .sharp:
@@ -616,6 +757,7 @@ private enum Keys {
     static let dockScale = "app.dock.scale"
     static let dockOpacity = "app.dock.opacity"
     static let enableMotionEffects = "app.motion.effects"
+    static let themePacks = "app.theme.packs"
     static let designLocked = "app.design.locked"
     static let showDesignDebugBadges = "app.design.debugBadges"
     static let enableExperimentalGlass = "app.design.experimentalGlass"
