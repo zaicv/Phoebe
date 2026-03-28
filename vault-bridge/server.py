@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import mimetypes
+import os
 import posixpath
 import threading
 from dataclasses import dataclass
@@ -40,6 +41,14 @@ class VideoIndex:
 
         for file_path in self.root.rglob("*"):
             if not file_path.is_file():
+                continue
+
+            # Resolve symlinks and keep a strict root jail: if a link escapes the
+            # configured root, skip it.
+            try:
+                resolved = file_path.resolve(strict=True)
+                resolved.relative_to(self.root)
+            except Exception:
                 continue
 
             rel = file_path.relative_to(self.root).as_posix()
@@ -178,8 +187,25 @@ class VaultHandler(BaseHTTPRequestHandler):
         except Exception as exc:  # pragma: no cover
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
 
+    def do_POST(self) -> None:
+        self._method_not_allowed()
+
+    def do_PUT(self) -> None:
+        self._method_not_allowed()
+
+    def do_PATCH(self) -> None:
+        self._method_not_allowed()
+
+    def do_DELETE(self) -> None:
+        self._method_not_allowed()
+
     def log_message(self, format: str, *args) -> None:
         return
+
+    def _method_not_allowed(self) -> None:
+        self.send_response(HTTPStatus.METHOD_NOT_ALLOWED)
+        self.send_header("Allow", "GET")
+        self.end_headers()
 
     def _authorize(self) -> None:
         header = self.headers.get("Authorization", "")
@@ -282,6 +308,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--token", required=True, help="Static API token")
     parser.add_argument("--host", default="100.64.0.1", help="Bind host (set to your Tailscale IP)")
     parser.add_argument("--port", type=int, default=8787)
+    parser.add_argument(
+        "--allow-writable-root",
+        action="store_true",
+        help="Allow starting even when the process has write permission on --root (not recommended).",
+    )
     return parser.parse_args()
 
 
@@ -290,6 +321,14 @@ def main() -> None:
     root = Path(args.root)
     if not root.exists() or not root.is_dir():
         raise SystemExit(f"Invalid root: {root}")
+    root = root.resolve()
+
+    # Security default: refuse to run if this process can write into root.
+    if not args.allow_writable_root and os.access(root, os.W_OK):
+        raise SystemExit(
+            "Refusing to start: root appears writable by this process. "
+            "Mount/read-permission as read-only, or pass --allow-writable-root to override."
+        )
 
     index = VideoIndex(root)
     index.rebuild()

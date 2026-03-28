@@ -50,6 +50,25 @@ class IndexTests(unittest.TestCase):
             self.assertEqual(len(results), 1)
             self.assertEqual(results[0]["filename"], "beach.mov")
 
+    def test_symlink_escape_is_skipped(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            outside_dir = root.parent / "outside-vault-test"
+            outside_dir.mkdir(exist_ok=True)
+            outside_file = outside_dir / "secret.mp4"
+            outside_file.write_bytes(b"secret")
+
+            link = root / "escape.mp4"
+            try:
+                link.symlink_to(outside_file)
+            except (NotImplementedError, OSError):
+                self.skipTest("Symlinks not supported in this environment")
+
+            index = VideoIndex(root)
+            index.rebuild()
+            names = [entry.filename for entry in index._by_id.values()]
+            self.assertNotIn("escape.mp4", names)
+
 
 if __name__ == "__main__":
     unittest.main()
