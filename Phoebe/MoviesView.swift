@@ -351,7 +351,7 @@ struct WatchedBadge: View {
     }
 }
 
-struct PillPrimaryButtonStyle: ButtonStyle {
+struct MoviesPillPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -365,7 +365,7 @@ struct PillPrimaryButtonStyle: ButtonStyle {
     }
 }
 
-struct PillSecondaryButtonStyle: ButtonStyle {
+struct MoviesPillSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(.subheadline, design: .rounded).weight(.medium))
@@ -382,7 +382,7 @@ struct PillSecondaryButtonStyle: ButtonStyle {
     }
 }
 
-struct PillGhostButtonStyle: ButtonStyle {
+struct MoviesPillGhostButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(.subheadline, design: .rounded).weight(.semibold))
@@ -398,7 +398,7 @@ struct PillGhostButtonStyle: ButtonStyle {
     }
 }
 
-func glassPanel(cornerRadius: CGFloat = 20) -> some View {
+func moviesGlassPanel(cornerRadius: CGFloat = 20) -> some View {
     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         .fill(Color.white.opacity(0.08))
         .overlay(
@@ -1098,7 +1098,7 @@ struct VideoCard: View {
                         } label: {
                             Image(systemName: viewModel.isInWatchlist(video.path) ? "heart.fill" : "heart")
                         }
-                        .buttonStyle(PillGhostButtonStyle())
+                        .buttonStyle(MoviesPillGhostButtonStyle())
 
                         Menu {
                             if viewModel.lists.isEmpty {
@@ -1118,7 +1118,7 @@ struct VideoCard: View {
                         } label: {
                             Image(systemName: "ellipsis")
                         }
-                        .buttonStyle(PillGhostButtonStyle())
+                        .buttonStyle(MoviesPillGhostButtonStyle())
                     }
                     .padding(8)
                 }
@@ -1152,7 +1152,7 @@ struct VideoCard: View {
             }
             .padding(10)
         }
-        .background(glassPanel(cornerRadius: 12))
+        .background(moviesGlassPanel(cornerRadius: 12))
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onTapGesture {
             guard video.isPlayableInApp else { return }
@@ -1226,20 +1226,20 @@ struct VideoCard: View {
                 Button("Play") {
                     onPlay()
                 }
-                .buttonStyle(PillPrimaryButtonStyle())
+                .buttonStyle(MoviesPillPrimaryButtonStyle())
                 .disabled(!video.isPlayableInApp)
 
                 Button("Download") {
                     viewModel.download(video)
                 }
-                .buttonStyle(PillSecondaryButtonStyle())
+                .buttonStyle(MoviesPillSecondaryButtonStyle())
 
                 Button {
                     viewModel.toggleWatchlist(video)
                 } label: {
                     Image(systemName: viewModel.isInWatchlist(video.path) ? "heart.fill" : "heart")
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
 
                 Menu {
                     ForEach(viewModel.lists) { list in
@@ -1249,11 +1249,11 @@ struct VideoCard: View {
                 } label: {
                     Image(systemName: "ellipsis")
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
             }
         }
         .padding(10)
-        .background(glassPanel(cornerRadius: 14))
+        .background(moviesGlassPanel(cornerRadius: 14))
         .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .onTapGesture {
             guard video.isPlayableInApp else { return }
@@ -1325,28 +1325,28 @@ struct MoviesHeaderChrome: View {
                     .foregroundStyle(.white.opacity(0.72))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(glassPanel(cornerRadius: 999))
+                    .background(moviesGlassPanel(cornerRadius: 999))
 
                 Button {
                     onRefresh()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
 
                 Button {
                     onOpenCommand()
                 } label: {
                     Image(systemName: "magnifyingglass")
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
 
                 Button {
                     onOpenCommand()
                 } label: {
                     Image(systemName: aiMode ? "brain.head.profile" : "sparkles")
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
                 .overlay(alignment: .bottomTrailing) {
                     if commandInputOpen {
                         Circle()
@@ -1463,7 +1463,7 @@ struct ContinueWatchingRow: View {
                                 }
                                 .frame(width: 220, alignment: .leading)
                                 .padding(12)
-                                .background(glassPanel(cornerRadius: 14))
+                                .background(moviesGlassPanel(cornerRadius: 14))
                             }
                             .buttonStyle(.plain)
                         }
@@ -1513,21 +1513,21 @@ struct LibraryBrowserView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(glassPanel(cornerRadius: 12))
+                    .background(moviesGlassPanel(cornerRadius: 12))
 
                 Button("Find") {
                     Task {
                         await viewModel.search(query: localSearchText)
                     }
                 }
-                .buttonStyle(PillPrimaryButtonStyle())
+                .buttonStyle(MoviesPillPrimaryButtonStyle())
             }
 
             HStack(spacing: 8) {
                 Button("Up") {
                     viewModel.navigateUp()
                 }
-                .buttonStyle(PillSecondaryButtonStyle())
+                .buttonStyle(MoviesPillSecondaryButtonStyle())
                 .disabled(viewModel.currentPath == "/")
 
                 Text(viewModel.currentPath)
@@ -1542,7 +1542,7 @@ struct LibraryBrowserView: View {
                 } label: {
                     Image(systemName: viewModel.viewMode == .grid ? "list.bullet" : "square.grid.2x2")
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
             }
 
             if viewModel.isLoading {
@@ -1558,7 +1558,7 @@ struct LibraryBrowserView: View {
                     .foregroundStyle(.red.opacity(0.92))
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(glassPanel(cornerRadius: 12))
+                    .background(moviesGlassPanel(cornerRadius: 12))
             }
 
             if !viewModel.folders.isEmpty {
@@ -1579,7 +1579,7 @@ struct LibraryBrowserView: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(glassPanel(cornerRadius: 12))
+                            .background(moviesGlassPanel(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
                     }
@@ -1662,19 +1662,19 @@ struct LibraryBrowserView: View {
                     Button("Play") {
                         viewModel.play(video)
                     }
-                    .buttonStyle(PillPrimaryButtonStyle())
+                    .buttonStyle(MoviesPillPrimaryButtonStyle())
                     .disabled(!video.isPlayableInApp)
 
                     Button("Download") {
                         viewModel.download(video)
                     }
-                    .buttonStyle(PillSecondaryButtonStyle())
+                    .buttonStyle(MoviesPillSecondaryButtonStyle())
                 }
             }
             Spacer()
         }
         .padding(14)
-        .background(glassPanel(cornerRadius: 16))
+        .background(moviesGlassPanel(cornerRadius: 16))
     }
 }
 
@@ -1693,13 +1693,13 @@ struct ListsTabView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(glassPanel(cornerRadius: 12))
+                    .background(moviesGlassPanel(cornerRadius: 12))
 
                 Button("Create") {
                     viewModel.createList(name: newListName)
                     newListName = ""
                 }
-                .buttonStyle(PillPrimaryButtonStyle())
+                .buttonStyle(MoviesPillPrimaryButtonStyle())
             }
 
             if viewModel.lists.isEmpty {
@@ -1748,7 +1748,7 @@ struct ListsTabView: View {
                                 Button("Play") {
                                     viewModel.play(video)
                                 }
-                                .buttonStyle(PillPrimaryButtonStyle())
+                                .buttonStyle(MoviesPillPrimaryButtonStyle())
                                 .disabled(!video.isPlayableInApp)
 
                                 Button {
@@ -1756,7 +1756,7 @@ struct ListsTabView: View {
                                 } label: {
                                     Image(systemName: "trash")
                                 }
-                                .buttonStyle(PillGhostButtonStyle())
+                                .buttonStyle(MoviesPillGhostButtonStyle())
                             }
 
                             if index != videos.count - 1 {
@@ -1766,7 +1766,7 @@ struct ListsTabView: View {
                     }
                 }
                 .padding(12)
-                .background(glassPanel(cornerRadius: 14))
+                .background(moviesGlassPanel(cornerRadius: 14))
             }
         }
     }
@@ -1787,7 +1787,7 @@ struct DownloadsTabView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(20)
-                .background(glassPanel(cornerRadius: 14))
+                .background(moviesGlassPanel(cornerRadius: 14))
             } else {
                 ForEach(viewModel.downloads) { download in
                     VStack(alignment: .leading, spacing: 8) {
@@ -1820,11 +1820,11 @@ struct DownloadsTabView: View {
                             Button("Cancel") {
                                 viewModel.cancelDownload(download)
                             }
-                            .buttonStyle(PillSecondaryButtonStyle())
+                            .buttonStyle(MoviesPillSecondaryButtonStyle())
                         }
                     }
                     .padding(12)
-                    .background(glassPanel(cornerRadius: 14))
+                    .background(moviesGlassPanel(cornerRadius: 14))
                 }
             }
         }
@@ -1856,7 +1856,7 @@ struct QueuePanelView: View {
                     } label: {
                         Image(systemName: "xmark")
                     }
-                    .buttonStyle(PillGhostButtonStyle())
+                    .buttonStyle(MoviesPillGhostButtonStyle())
                 }
 
                 ScrollView {
@@ -1913,12 +1913,12 @@ struct QueuePanelView: View {
                     Button("Play Next: \(nextTitle)") {
                         viewModel.advanceToNextInPlaylist()
                     }
-                    .buttonStyle(PillSecondaryButtonStyle())
+                    .buttonStyle(MoviesPillSecondaryButtonStyle())
                 }
             }
             .padding(12)
             .frame(width: 320)
-            .background(glassPanel(cornerRadius: 16))
+            .background(moviesGlassPanel(cornerRadius: 16))
             .padding(.trailing, 12)
         } else if !viewModel.showQueue && !viewModel.playlist.isEmpty {
             Button {
@@ -1932,7 +1932,7 @@ struct QueuePanelView: View {
                 .foregroundStyle(Color(red: 1.0, green: 0.73, blue: 0.2))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(glassPanel(cornerRadius: 999))
+                .background(moviesGlassPanel(cornerRadius: 999))
             }
             .buttonStyle(.plain)
             .padding(.trailing, 12)
@@ -1965,7 +1965,7 @@ struct CommandBarView: View {
                     }
                     .frame(maxHeight: 140)
                     .padding(10)
-                    .background(glassPanel(cornerRadius: 12))
+                    .background(moviesGlassPanel(cornerRadius: 12))
                 }
 
                 HStack(spacing: 8) {
@@ -1980,7 +1980,7 @@ struct CommandBarView: View {
                         .foregroundStyle(useAIMode ? Color.purple : Color(red: 1.0, green: 0.73, blue: 0.2))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
-                        .background(glassPanel(cornerRadius: 999))
+                        .background(moviesGlassPanel(cornerRadius: 999))
                     }
                     .buttonStyle(.plain)
 
@@ -2003,7 +2003,7 @@ struct CommandBarView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 9)
-                    .background(glassPanel(cornerRadius: 12))
+                    .background(moviesGlassPanel(cornerRadius: 12))
 
                     Button {
                         onSubmit()
@@ -2016,7 +2016,7 @@ struct CommandBarView: View {
                                 .foregroundStyle(.white)
                         }
                     }
-                    .buttonStyle(PillGhostButtonStyle())
+                    .buttonStyle(MoviesPillGhostButtonStyle())
                     .disabled(commandText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || aiLoading)
                     .tint(useAIMode ? .purple : Color(red: 1.0, green: 0.73, blue: 0.2))
 
@@ -2025,7 +2025,7 @@ struct CommandBarView: View {
                     } label: {
                         Image(systemName: "xmark")
                     }
-                    .buttonStyle(PillGhostButtonStyle())
+                    .buttonStyle(MoviesPillGhostButtonStyle())
                 }
 
                 HStack {
@@ -2039,7 +2039,7 @@ struct CommandBarView: View {
                 }
             }
             .padding(12)
-            .background(glassPanel(cornerRadius: 16))
+            .background(moviesGlassPanel(cornerRadius: 16))
             .onAppear {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     inputFocused = true
@@ -2096,7 +2096,7 @@ struct MoviesPlayerView: View {
             } label: {
                 Image(systemName: "xmark")
             }
-            .buttonStyle(PillGhostButtonStyle())
+            .buttonStyle(MoviesPillGhostButtonStyle())
             .padding(18)
         }
         .onAppear {
@@ -2124,7 +2124,7 @@ struct MoviesPlayerView: View {
                     Image(systemName: "gobackward.10")
                         .font(.system(size: 24, weight: .bold))
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
 
                 Button {
                     togglePlayPause()
@@ -2132,7 +2132,7 @@ struct MoviesPlayerView: View {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 34, weight: .bold))
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
 
                 Button {
                     seekBy(10)
@@ -2140,7 +2140,7 @@ struct MoviesPlayerView: View {
                     Image(systemName: "goforward.10")
                         .font(.system(size: 24, weight: .bold))
                 }
-                .buttonStyle(PillGhostButtonStyle())
+                .buttonStyle(MoviesPillGhostButtonStyle())
             }
             .padding(.bottom, 16)
 
@@ -2178,7 +2178,7 @@ struct MoviesPlayerView: View {
                     } label: {
                         Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     }
-                    .buttonStyle(PillGhostButtonStyle())
+                    .buttonStyle(MoviesPillGhostButtonStyle())
 
                     Slider(value: Binding(
                         get: { Double(volume) },
@@ -2194,7 +2194,7 @@ struct MoviesPlayerView: View {
                         } label: {
                             Image(systemName: captionsEnabled ? "captions.bubble.fill" : "captions.bubble")
                         }
-                        .buttonStyle(PillGhostButtonStyle())
+                        .buttonStyle(MoviesPillGhostButtonStyle())
                     }
 
                     Menu {
@@ -2209,12 +2209,12 @@ struct MoviesPlayerView: View {
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white)
                     }
-                    .buttonStyle(PillSecondaryButtonStyle())
+                    .buttonStyle(MoviesPillSecondaryButtonStyle())
 
                     Button("Queue") {
                         viewModel.showQueue.toggle()
                     }
-                    .buttonStyle(PillSecondaryButtonStyle())
+                    .buttonStyle(MoviesPillSecondaryButtonStyle())
 
                     #if os(iOS) || targetEnvironment(macCatalyst)
                     AirPlayRouteButton()
@@ -2226,11 +2226,11 @@ struct MoviesPlayerView: View {
                     } label: {
                         Image(systemName: "arrow.up.left.and.arrow.down.right")
                     }
-                    .buttonStyle(PillGhostButtonStyle())
+                    .buttonStyle(MoviesPillGhostButtonStyle())
                 }
             }
             .padding(12)
-            .background(glassPanel(cornerRadius: 14))
+            .background(moviesGlassPanel(cornerRadius: 14))
             .padding(.horizontal, 20)
             .padding(.bottom, 18)
         }
