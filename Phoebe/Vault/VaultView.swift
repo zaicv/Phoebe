@@ -29,6 +29,7 @@ struct VaultView: View {
     @State private var newListName: String = ""
     @State private var healthStatus: String = "Unknown"
     @State private var selectedVideo: VaultVideoRef?
+    @State private var isPlayerPresented: Bool = false
 
     init() {
         let settings = VaultSettingsStore()
@@ -71,25 +72,19 @@ struct VaultView: View {
             }
             healthStatus = await repo.bridgeHealth()
         }
-        .sheet(item: $selectedVideo) { video in
-            NavigationStack {
-                if let streamURL = repo.playerURL(for: video) {
-                    VaultPlayerView(
-                        video: video,
-                        streamURL: streamURL,
-                        headers: VaultBridgeClient(settings: settings).authHeaders(),
-                        startSeconds: repo.resumePosition(for: video.id),
-                        onSavePosition: { position in
-                            repo.savePlayback(videoId: video.id, seconds: position)
-                        }
-                    )
-                    .environmentObject(appState)
-                } else {
-                    Text("Invalid stream URL")
-                        .padding()
-                }
-            }
+        #if os(iOS)
+        .fullScreenCover(isPresented: $isPlayerPresented, onDismiss: {
+            selectedVideo = nil
+        }) {
+            playerDestination
         }
+        #else
+        .sheet(isPresented: $isPlayerPresented, onDismiss: {
+            selectedVideo = nil
+        }) {
+            playerDestination
+        }
+        #endif
     }
 
     private var background: some View {
@@ -198,7 +193,10 @@ struct VaultView: View {
                         Spacer(minLength: 12)
                         HStack(spacing: 8) {
                             Button("Play") {
-                                if featured.isPlayableInApp { selectedVideo = featured }
+                                if featured.isPlayableInApp {
+                                    selectedVideo = featured
+                                    isPlayerPresented = true
+                                }
                             }
                             .buttonStyle(PillPrimaryButtonStyle())
                             .disabled(!featured.isPlayableInApp)
@@ -306,7 +304,10 @@ struct VaultView: View {
 
                         HStack(spacing: 8) {
                             Button("Play") {
-                                if video.isPlayableInApp { selectedVideo = video }
+                                if video.isPlayableInApp {
+                                    selectedVideo = video
+                                    isPlayerPresented = true
+                                }
                             }
                             .buttonStyle(PillPrimaryButtonStyle())
                             .disabled(!video.isPlayableInApp)
@@ -379,7 +380,10 @@ struct VaultView: View {
                                 }
                                 Spacer(minLength: 8)
                                 Button("Play") {
-                                    if video.isPlayableInApp { selectedVideo = video }
+                                    if video.isPlayableInApp {
+                                        selectedVideo = video
+                                        isPlayerPresented = true
+                                    }
                                 }
                                 .buttonStyle(PillSecondaryButtonStyle())
                                 .disabled(!video.isPlayableInApp)
@@ -457,6 +461,24 @@ struct VaultView: View {
                     .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
             )
             .shadow(color: .black.opacity(0.35), radius: 18, x: 0, y: 10)
+    }
+
+    @ViewBuilder
+    private var playerDestination: some View {
+        if let video = selectedVideo, let streamURL = repo.playerURL(for: video) {
+            VaultPlayerView(
+                video: video,
+                streamURL: streamURL,
+                headers: VaultBridgeClient(settings: settings).authHeaders(),
+                startSeconds: repo.resumePosition(for: video.id),
+                onSavePosition: { position in
+                    repo.savePlayback(videoId: video.id, seconds: position)
+                }
+            )
+        } else {
+            Text("Invalid stream URL")
+                .padding()
+        }
     }
 }
 
