@@ -10,6 +10,7 @@ struct AppTile: Identifiable {
 
 enum AppDestination {
     case rays
+    case vault
     case setpoint // placeholder
     case chat // placeholder — not built yet
     case settings
@@ -17,6 +18,7 @@ enum AppDestination {
 
 private let tiles: [AppTile] = [
     AppTile(label: "Rays", icon: "checklist", color: Color(hex: "#34C759"), destination: .rays),
+    AppTile(label: "Vault", icon: "film.stack", color: Color(hex: "#5AC8FA"), destination: .vault),
     AppTile(label: "SetPoint", icon: "waveform.path.ecg", color: Color(hex: "#FF2D55"), destination: .setpoint),
     AppTile(label: "Phoebe", icon: "bubble.left", color: Color(hex: "#007AFF"), destination: .chat),
     AppTile(label: "Settings", icon: "gearshape", color: Color(hex: "#8E8E93"), destination: .settings),
@@ -65,6 +67,8 @@ struct HomeGrid: View {
                 switch destination {
                 case .rays:
                     RaysView()
+                case .vault:
+                    VaultView()
                 case .setpoint:
                     Text("SetPoint — coming soon")
                 case .chat:

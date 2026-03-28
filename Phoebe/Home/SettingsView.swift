@@ -29,6 +29,8 @@ struct SettingsView: View {
     @State private var isSigningOut = false
     @State private var errorMessage: String?
     @State private var themePackName: String = ""
+    @StateObject private var vaultSettings = VaultSettingsStore()
+    @State private var vaultBridgeStatus: String = "Unknown"
 
     var body: some View {
         NavigationSplitView {
@@ -456,10 +458,46 @@ struct SettingsView: View {
     }
 
     private var appSection: some View {
-        settingsCard("About") {
-            row(title: "App", value: "Phoebe")
-            row(title: "Mode", value: "Multiplatform")
-            row(title: "Surface", value: appState.surfaceMaterial.label)
+        VStack(spacing: 16) {
+            settingsCard("About") {
+                row(title: "App", value: "Phoebe")
+                row(title: "Mode", value: "Multiplatform")
+                row(title: "Surface", value: appState.surfaceMaterial.label)
+            }
+
+            settingsCard("Vault Bridge") {
+                TextField("Bridge URL (http://100.x.y.z:8787)", text: $vaultSettings.bridgeURL)
+                    .textFieldStyle(.roundedBorder)
+                    #if os(iOS)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    #endif
+
+                SecureField("API token", text: $vaultSettings.apiToken)
+                    .textFieldStyle(.roundedBorder)
+
+                TextField("Root label", text: $vaultSettings.rootLabel)
+                    .textFieldStyle(.roundedBorder)
+
+                HStack {
+                    Button("Test Connection") {
+                        Task {
+                            let client = VaultBridgeClient(settings: vaultSettings)
+                            do {
+                                let health = try await client.health()
+                                vaultBridgeStatus = "\(health.status) (v\(health.version))"
+                            } catch {
+                                vaultBridgeStatus = "Unavailable"
+                            }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Text(vaultBridgeStatus)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
     }
 
